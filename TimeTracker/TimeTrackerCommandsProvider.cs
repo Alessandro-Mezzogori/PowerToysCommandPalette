@@ -4,19 +4,23 @@
 
 using Microsoft.CommandPalette.Extensions;
 using Microsoft.CommandPalette.Extensions.Toolkit;
+using TimeTracker.Helpers;
 
 namespace TimeTracker;
 
 public partial class TimeTrackerCommandsProvider : CommandProvider
 {
     private readonly ICommandItem[] _commands;
+    private readonly SettingsManager _settingsManager = new();
 
     public TimeTrackerCommandsProvider()
     {
         DisplayName = "Time Tracker";
         Icon = IconHelpers.FromRelativePath("Assets\\StoreLogo.png");
+        Settings = _settingsManager.Settings;
+
         _commands = [
-            new CommandItem(new TimeTrackerPage()) { Title = DisplayName },
+            new CommandItem(new TimeTrackerPage(_settingsManager)) { Title = DisplayName },
         ];
     }
 

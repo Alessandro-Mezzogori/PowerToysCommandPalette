@@ -1,0 +1,76 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+
+namespace TimeTracker.Services;
+
+public class StateService
+{
+    private readonly string _stateFilePath;
+
+    public StateService(string stateFilePath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(stateFilePath, nameof(stateFilePath));
+
+        _stateFilePath = stateFilePath;
+    }
+
+    public State LoadState()
+    {
+        if (!File.Exists(_stateFilePath))
+        {
+            return new State { };
+        }
+
+        var json = File.ReadAllText(_stateFilePath);
+        return JsonSerializer.Deserialize(json, SourceGenerationContext.Default.State)!; // TODO: gestire il nullable
+    }
+
+    public void SaveState(State state)
+    {
+        ArgumentNullException.ThrowIfNull(state, nameof(state));
+
+        var json = JsonSerializer.Serialize(state, SourceGenerationContext.Default.State);
+        File.WriteAllText(_stateFilePath, json);
+    }
+}
+
+public class State
+{
+    public string? CurrentFile { get; set; }
+    public string? CurrentTrack { get; set; }
+    public TimeOnly? StartTime { get; set; }
+
+    public StateType Type { 
+        get
+        {
+            if(string.IsNullOrWhiteSpace(CurrentFile))
+                return StateType.None;
+
+            if(string.IsNullOrWhiteSpace(CurrentTrack))
+                return StateType.Stopped;
+
+            if(StartTime == null)
+                return StateType.Paused;
+
+            return StateType.Tracking;
+        } 
+    }
+
+    public enum StateType
+    {
+        None,
+        Tracking,
+        Paused,
+        Stopped
+    }
+}
+
+[JsonSourceGenerationOptions(WriteIndented = true)]
+[JsonSerializable(typeof(State))]
+internal partial class SourceGenerationContext : JsonSerializerContext { }
