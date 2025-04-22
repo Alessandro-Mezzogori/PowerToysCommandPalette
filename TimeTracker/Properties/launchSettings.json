@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "TimeTracker (Package)": {
+      "commandName": "MsixPackage",
+      "doNotLaunchApp": true
+    },
+    "TimeTracker (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
