@@ -14,6 +14,8 @@ namespace TimeTracker.Helpers;
 [JsonSerializable(typeof(State))]
 [JsonSerializable(typeof(CloseTrackingForm.CloseTrackingFormData))]
 [JsonSerializable(typeof(CloseTrackingForm.CloseTrackingFormResponse))]
+[JsonSerializable(typeof(StartTrackingForm.StartTrackingFormData))]
+[JsonSerializable(typeof(StartTrackingForm.StartTrackingFormResponse))]
 internal partial class SourceGenerationContext : JsonSerializerContext 
 { 
 }

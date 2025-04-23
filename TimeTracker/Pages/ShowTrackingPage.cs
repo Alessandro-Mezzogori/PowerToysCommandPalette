@@ -4,6 +4,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,13 +14,13 @@ using TimeTracker.Helpers;
 
 namespace TimeTracker.Pages;
 
-internal sealed partial class CloseTrackingPage : ContentPage
+internal sealed partial class ShowTrackingPage: ContentPage
 {
     private readonly SettingsManager _settings;
     private readonly StateRepository _stateService;
     private readonly ILogger _logger;
 
-    public CloseTrackingPage(
+    public ShowTrackingPage(
         SettingsManager settings,
         StateRepository stateRepository,
         ILogger logger
@@ -30,9 +31,9 @@ internal sealed partial class CloseTrackingPage : ContentPage
         _logger = logger;
 
         Icon = new IconInfo("\uF147");
-        Title = "My Second Page";
+        Title = "Current tracking page";
         Name = "Open";
-        Id = "close-tracking-page";
+        Id = "current-tracking-page";
     }
 
 
@@ -43,23 +44,20 @@ internal sealed partial class CloseTrackingPage : ContentPage
 
         try
         {
+            List<IContent> content = new List<IContent>();
             var state = _stateService.LoadState();
-            var currenttime = TimeOnly.FromDateTime(DateTime.Now);
 
-            var closeTrackingForm = new CloseTrackingForm(
-                _settings,
-                _stateService,
-                _logger,
-                new CloseTrackingForm.CloseTrackingFormData
-                {
-                    title = state.CurrentTrack,
-                    duration = (currenttime - state.StartTime).Value.ToString(@"hh\:mm", CultureInfo.InvariantCulture),
-                }
-            );
+            if (!string.IsNullOrEmpty(state.CurrentFile))
+            {
+                var markdown = File.ReadAllText(state.CurrentFile);
+                content.Add(new MarkdownContent(markdown));
+            }
+            else
+            {
+                content.Add(new MarkdownContent("No tracking file found"));
+            }
 
-            return [
-                closeTrackingForm,
-            ];
+            return content.ToArray();
         }
         catch (Exception ex)
         {

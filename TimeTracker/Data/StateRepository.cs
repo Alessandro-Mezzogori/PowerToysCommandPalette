@@ -58,6 +58,8 @@ public class State
         } 
     }
 
+    public bool IsTracking => Type == StateType.Tracking || Type == StateType.Paused;
+
     public enum StateType
     {
         None,

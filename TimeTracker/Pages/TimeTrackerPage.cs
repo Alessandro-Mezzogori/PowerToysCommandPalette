@@ -40,13 +40,13 @@ internal sealed partial class TimeTrackerPage : ListPage
         var state = _stateService.LoadState();
 
         List<ListItem> items = [
-            new ListItem(new StartTrackingCommand(_settingsManager, _stateService, _logger)) {
+            new ListItem(new StartTrackingPage(_settingsManager, _stateService, _logger)) {
                 Title = "Start tracking",
             },
             new ListItem(new NoOpCommand()) {
                 Title = "Pause tracking",
             },
-            new ListItem(new NoOpCommand()) {
+            new ListItem(new ShowTrackingPage(_settingsManager, _stateService, _logger)) {
                 Title = "Show tracked",
             },
             new ListItem(new ExtensionInfoCommand(_logger)) {

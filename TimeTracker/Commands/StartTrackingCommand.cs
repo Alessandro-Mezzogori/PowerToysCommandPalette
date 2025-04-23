@@ -11,6 +11,7 @@ using TimeTracker.Helpers;
 using TimeTracker.Properties;
 using TimeTracker.Data;
 using Serilog;
+using TimeTracker.Forms;
 
 namespace TimeTracker.Commands;
 
@@ -20,17 +21,24 @@ internal sealed partial class StartTrackingCommand : InvokableCommand
     private readonly SettingsManager _settings;
     private readonly StateRepository _stateService;
     private readonly ILogger _logger;
+    private readonly StartTrackingForm.StartTrackingFormResponse _data;
 
     // ##### Public properties #####
     public override string Name => "Start tracking";
     public override IconInfo Icon => new("\uE8A7");
 
     // ##### Impl #####
-    public StartTrackingCommand(SettingsManager settings, StateRepository stateService, ILogger logger)
+    public StartTrackingCommand(
+        SettingsManager settings,
+        StateRepository stateService,
+        ILogger logger,
+        StartTrackingForm.StartTrackingFormResponse data
+    )
     {
         _settings = settings;
         _stateService = stateService;
         _logger = logger;
+        _data = data;
     }
 
     public override ICommandResult Invoke()
@@ -49,11 +57,6 @@ internal sealed partial class StartTrackingCommand : InvokableCommand
             _logger.Information("Loading state...");
             var state = _stateService.LoadState();
 
-            // if tracking => stop tracking
-            // if paused => stop tracking
-            // if stopped => start tracking
-            // if none => start tracking
-
             var filename = FilenameManager.TrackingFilename(_settings.FilenameTemplate!, new TrackingFilenameArgs
             {
                 Date = DateTime.Today,
@@ -63,32 +66,10 @@ internal sealed partial class StartTrackingCommand : InvokableCommand
 
                 var taskfileService = new TrackfileService(trackingfilePath, new TrackfileInstanceTransformerMarkdown());
 
-            if (state.Type == State.StateType.Tracking || state.Type == State.StateType.Paused)
-            {
-                _logger.Information("Was tracking");
-                TrackfileInstance instance = new()
-                {
-                    // TODO input
-                    Title = state.CurrentTrack ?? string.Empty,
-
-                    // TODO input
-                    Description = "test description",
-
-                    StartTime = state.StartTime ?? throw new InvalidOperationException("Start time is null"),
-                    EndTime = TimeOnly.FromDateTime(DateTime.Now),
-                };
-
-                state.StartTime = null;
-                state.CurrentTrack = null;
-
-                _logger.Information("Saving state");
-                taskfileService.AddTrackfileInstance(instance);
-            }
-
             // TODO input
             _logger.Information("Start tracking");
             state.CurrentFile = filename;
-            state.CurrentTrack = "test new track";
+            state.CurrentTrack = _data.title;
             state.StartTime = TimeOnly.FromDateTime(DateTime.Now);
 
             _stateService.SaveState(state);
@@ -102,7 +83,7 @@ internal sealed partial class StartTrackingCommand : InvokableCommand
         return CommandResult.ShowToast(new ToastArgs
         {
             Message = Resources.msg_tracking_started,
-            Result = CommandResult.Hide(),
+            Result = CommandResult.Dismiss(),
         });
     }
 

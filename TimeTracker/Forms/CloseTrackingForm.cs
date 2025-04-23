@@ -1,35 +1,42 @@
-﻿using Microsoft.CommandPalette.Extensions.Toolkit;
+﻿using Microsoft.CommandPalette.Extensions;
+using Microsoft.CommandPalette.Extensions.Toolkit;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using TimeTracker.Commands;
 using TimeTracker.Data;
 using TimeTracker.Helpers;
 
 namespace TimeTracker.Forms;
 
 [SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1402:File may only contain a single type", Justification = "Sample code")]
-internal sealed partial class CloseTrackingForm : FormContent
+public sealed partial class CloseTrackingForm : FormContent
 {
     private readonly SettingsManager _settings;
     private readonly StateRepository _stateRepository;
     private readonly ILogger _logger;
+    private readonly Func<ICommandResult>? _endAction;
 
     public CloseTrackingForm(
         SettingsManager settings,
         StateRepository stateRepository,
         ILogger logger,
-        CloseTrackingFormData data
+        CloseTrackingFormData data,
+        Func<ICommandResult>? endAction = null
     )
     {
         _settings = settings;
         _stateRepository = stateRepository;
         _logger = logger;
+        _endAction = endAction;
 
         TemplateJson = """
         {
@@ -93,40 +100,15 @@ internal sealed partial class CloseTrackingForm : FormContent
     public override CommandResult SubmitForm(string payload) { 
         var response = JsonSerializer.Deserialize(payload, SourceGenerationContext.Default.CloseTrackingFormResponse);
 
-        var filename = FilenameManager.TrackingFilename(_settings.FilenameTemplate!, new TrackingFilenameArgs
-        {
-            Date = DateTime.Today,
-        });
-
-        var trackingfilePath = Path.Combine(_settings.StorageFolder!, filename);
-        var taskfileService = new TrackfileService(trackingfilePath, new TrackfileInstanceTransformerMarkdown());
-        var state = _stateRepository.LoadState();
-
-        TrackfileInstance instance = new()
-        {
-            Title = response.title,
-            Description = response.description,
-            StartTime = state.StartTime,
-            EndTime = state.StartTime + TimeSpan.Parse(response.duration)
-        }
-        //     Description = "test description",
-
-            //     StartTime = state.StartTime ?? throw new InvalidOperationException("Start time is null"),
-            //     EndTime = TimeOnly.FromDateTime(DateTime.Now),
-            // };
-
-            // state.StartTime = null;
-            // state.CurrentTrack = null;
-
-            // _logger.Verbose("Saving state...");
-            // taskfileService.AddTrackfileInstance(instance);
-
-            // _stateRepository.SaveState(state);
-
-
         return CommandResult.Confirm(new ConfirmationArgs{ 
             Description = payload,
-            PrimaryCommand = new NoOpCommand(),
+            PrimaryCommand = new StopTrackingCommand(
+                _settings,
+                _stateRepository,
+                _logger,
+                response,
+                commandResult: _endAction
+            ),
             IsPrimaryCommandCritical = false,
             Title = "test"
         });
