@@ -6,6 +6,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.CommandPalette.Extensions;
+using Serilog;
 
 namespace TimeTracker;
 
@@ -13,12 +14,12 @@ namespace TimeTracker;
 public sealed partial class TimeTracker : IExtension, IDisposable
 {
     private readonly ManualResetEvent _extensionDisposedEvent;
+    private readonly TimeTrackerCommandsProvider _provider;
 
-    private readonly TimeTrackerCommandsProvider _provider = new();
-
-    public TimeTracker(ManualResetEvent extensionDisposedEvent)
+    public TimeTracker(ManualResetEvent extensionDisposedEvent, ILogger logger)
     {
         this._extensionDisposedEvent = extensionDisposedEvent;
+        _provider = new(logger);
     }
 
     public object? GetProvider(ProviderType providerType)

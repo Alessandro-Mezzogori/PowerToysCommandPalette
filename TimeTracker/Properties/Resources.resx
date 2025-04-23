@@ -144,4 +144,7 @@
   <data name="msg_tracking_started" xml:space="preserve">
     <value>Tracking has started</value>
   </data>
+  <data name="msg_tracking_notstarted" xml:space="preserve">
+    <value>Not task is being tracked</value>
+  </data>
 </root>

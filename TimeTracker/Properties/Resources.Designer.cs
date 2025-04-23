@@ -133,6 +133,15 @@ namespace TimeTracker.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Not task is being tracked.
+        /// </summary>
+        internal static string msg_tracking_notstarted {
+            get {
+                return ResourceManager.GetString("msg_tracking_notstarted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Tracking has started.
         /// </summary>
         internal static string msg_tracking_started {

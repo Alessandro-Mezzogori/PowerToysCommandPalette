@@ -1,6 +1,7 @@
 ﻿using Microsoft.CommandPalette.Extensions;
 using Microsoft.CommandPalette.Extensions.Toolkit;
 using Microsoft.Windows.Storage;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,11 +13,20 @@ namespace TimeTracker.Commands;
 
 internal sealed partial class ExtensionInfoCommand : InvokableCommand
 {
+    private readonly ILogger _logger;
+
     public override string Name => "Extension info";
     public override IconInfo Icon => new("\uE8A7");
 
+    public ExtensionInfoCommand(ILogger logger)
+    {
+        _logger = logger;
+    }
+
     public override ICommandResult Invoke()
     {
+        _logger.Verbose("Extension info command invoked");
+
         var info = $"""
         Extension info:
             Logging folder: {ApplicationData.GetDefault().TemporaryFolder.Path}

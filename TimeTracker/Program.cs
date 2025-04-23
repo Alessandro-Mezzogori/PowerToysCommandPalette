@@ -34,7 +34,7 @@ public class Program
             // We are instantiating an extension instance once above, and returning it every time the callback in RegisterExtension below is called.
             // This makes sure that only one instance of SampleExtension is alive, which is returned every time the host asks for the IExtension object.
             // If you want to instantiate a new instance each time the host asks, create the new instance inside the delegate.
-            TimeTracker extensionInstance = new(extensionDisposedEvent);
+            TimeTracker extensionInstance = new(extensionDisposedEvent, Log.Logger);
             server.RegisterClass<TimeTracker, IExtension>(() => extensionInstance);
             server.Start();
 
