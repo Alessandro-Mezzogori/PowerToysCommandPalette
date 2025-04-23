@@ -7,7 +7,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using TimeTracker.Properties;
-using TimeTracker.Services;
 
 namespace TimeTracker.Helpers;
 

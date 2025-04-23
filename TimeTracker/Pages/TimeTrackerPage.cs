@@ -7,14 +7,14 @@ using Microsoft.CommandPalette.Extensions.Toolkit;
 using System;
 using TimeTracker.Commands;
 using TimeTracker.Helpers;
-using TimeTracker.Services;
+using TimeTracker.Data;
 
 namespace TimeTracker;
 
 internal sealed partial class TimeTrackerPage : ListPage
 {
     private SettingsManager _settingsManager;
-    private StateService _stateService;
+    private StateRepository _stateService;
 
     public TimeTrackerPage(SettingsManager settingsManager)
     {
@@ -25,7 +25,7 @@ internal sealed partial class TimeTrackerPage : ListPage
         _settingsManager = settingsManager;
 
         ArgumentNullException.ThrowIfNull(_settingsManager.StateJsonPath, nameof(_settingsManager.StateJsonPath));
-        _stateService = new StateService(_settingsManager.StateJsonPath);
+        _stateService = new StateRepository(_settingsManager.StateJsonPath);
     }
 
     public override IListItem[] GetItems()
@@ -42,6 +42,9 @@ internal sealed partial class TimeTrackerPage : ListPage
             },
             new ListItem(new NoOpCommand()) {
                 Title = "Show tracked",
+            },
+            new ListItem(new ExtensionInfoCommand()) {
+                Title = "Extension info",
             },
         ];
     }

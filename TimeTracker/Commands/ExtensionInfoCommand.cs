@@ -1,5 +1,6 @@
 ﻿using Microsoft.CommandPalette.Extensions;
 using Microsoft.CommandPalette.Extensions.Toolkit;
+using Microsoft.Windows.Storage;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,14 +10,19 @@ using System.Threading.Tasks;
 
 namespace TimeTracker.Commands;
 
-internal sealed partial class ShowMessageCommand : InvokableCommand
+internal sealed partial class ExtensionInfoCommand : InvokableCommand
 {
-    public override string Name => "Show message";
+    public override string Name => "Extension info";
     public override IconInfo Icon => new("\uE8A7");
 
     public override ICommandResult Invoke()
     {
-        _ = MessageBox(0, "I came from the command palette", "Hello", 0x00001000);
+        var info = $"""
+        Extension info:
+            Logging folder: {ApplicationData.GetDefault().TemporaryFolder.Path}
+        """;
+
+        _ = MessageBox(0, info, "Extension info", 0x00001000);
         return CommandResult.KeepOpen();
     }
 

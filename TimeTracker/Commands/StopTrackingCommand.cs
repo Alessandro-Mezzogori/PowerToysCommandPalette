@@ -10,11 +10,10 @@ using System.Threading.Tasks;
 using TimeTracker.Helpers;
 using TimeTracker.Properties;
 using TimeTracker.Data;
-using Serilog;
 
 namespace TimeTracker.Commands;
 
-internal sealed partial class StartTrackingCommand : InvokableCommand
+internal sealed partial class StopTrackingCommand : InvokableCommand
 {
     // ##### Private fields #####
     private readonly SettingsManager _settings;
@@ -25,7 +24,7 @@ internal sealed partial class StartTrackingCommand : InvokableCommand
     public override IconInfo Icon => new("\uE8A7");
 
     // ##### Impl #####
-    public StartTrackingCommand(SettingsManager settings, StateRepository stateService)
+    public StopTrackingCommand(SettingsManager settings, StateRepository stateService)
     {
         _settings = settings;
         _stateService = stateService;
@@ -33,6 +32,8 @@ internal sealed partial class StartTrackingCommand : InvokableCommand
 
     public override ICommandResult Invoke()
     {
+        StringBuilder sb = new(); 
+
         var ensureStorageFolderResult = EnsureStorageFolder();
         if(ensureStorageFolderResult != null)
             return ensureStorageFolderResult;
@@ -44,57 +45,63 @@ internal sealed partial class StartTrackingCommand : InvokableCommand
         // Todo spostare da qualche parte condivisa
         try
         {
-            Log.Information("Loading state...");
+
+            sb.AppendLine("Loading state...");
             var state = _stateService.LoadState();
 
-            // if tracking => stop tracking
-            // if paused => stop tracking
-            // if stopped => start tracking
-            // if none => start tracking
+        // if tracking => stop tracking
+        // if paused => stop tracking
+        // if stopped => start tracking
+        // if none => start tracking
 
-            var filename = FilenameManager.TrackingFilename(_settings.FilenameTemplate!, new TrackingFilenameArgs
+        var filename = FilenameManager.TrackingFilename(_settings.FilenameTemplate!, new TrackingFilenameArgs
+        {
+            Date = DateTime.Today,
+        });
+
+        var trackingfilePath = Path.Combine(_settings.StorageFolder!, filename);
+
+            var taskfileService = new TrackfileService(trackingfilePath, new TrackfileInstanceTransformerMarkdown());
+
+        if (state.Type == State.StateType.Tracking || state.Type == State.StateType.Paused)
+        {
+            sb.AppendLine("was tracking...");
+            TrackfileInstance instance = new()
             {
-                Date = DateTime.Today,
-            });
+                // TODO input
+                Title = state.CurrentTrack ?? string.Empty,
 
-            var trackingfilePath = Path.Combine(_settings.StorageFolder!, filename);
+                // TODO input
+                Description = "test description",
 
-                var taskfileService = new TrackfileService(trackingfilePath, new TrackfileInstanceTransformerMarkdown());
+                StartTime = state.StartTime ?? throw new InvalidOperationException("Start time is null"),
+                EndTime = TimeOnly.FromDateTime(DateTime.Now),
+            };
 
-            if (state.Type == State.StateType.Tracking || state.Type == State.StateType.Paused)
-            {
-                Log.Information("Was tracking");
-                TrackfileInstance instance = new()
-                {
-                    // TODO input
-                    Title = state.CurrentTrack ?? string.Empty,
+            state.StartTime = null;
+            state.CurrentTrack = null;
 
-                    // TODO input
-                    Description = "test description",
+            sb.AppendLine("Saving state...");
+            taskfileService.AddTrackfileInstance(instance);
+        }
 
-                    StartTime = state.StartTime ?? throw new InvalidOperationException("Start time is null"),
-                    EndTime = TimeOnly.FromDateTime(DateTime.Now),
-                };
+        // TODO input
+        sb.AppendLine("Start tracking...");
+        state.CurrentFile = filename;
+        state.CurrentTrack = "test new track";
+        state.StartTime = TimeOnly.FromDateTime(DateTime.Now);
 
-                state.StartTime = null;
-                state.CurrentTrack = null;
-
-                Log.Information("Saving state");
-                taskfileService.AddTrackfileInstance(instance);
-            }
-
-            // TODO input
-            Log.Information("Start tracking");
-            state.CurrentFile = filename;
-            state.CurrentTrack = "test new track";
-            state.StartTime = TimeOnly.FromDateTime(DateTime.Now);
-
-            _stateService.SaveState(state);
+        sb.AppendLine("Save state...");
+        _stateService.SaveState(state);
         }
         catch(Exception ex)
         {
-            Log.Error(ex.Message);
-            Log.Error(ex.StackTrace ?? string.Empty);
+            sb.AppendLine(ex.Message);
+            sb.AppendLine(ex.StackTrace);
+        }
+        finally
+        {
+            File.WriteAllText(_settings.StorageFolder + "\\error.log", sb.ToString());
         }
 
         return CommandResult.ShowToast(new ToastArgs

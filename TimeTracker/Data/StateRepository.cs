@@ -7,13 +7,13 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace TimeTracker.Services;
+namespace TimeTracker.Data;
 
-public class StateService
+public class StateRepository
 {
     private readonly string _stateFilePath;
 
-    public StateService(string stateFilePath)
+    public StateRepository(string stateFilePath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(stateFilePath, nameof(stateFilePath));
 
